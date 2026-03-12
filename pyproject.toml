@@ -15,3 +15,4 @@ url = "https://download.pytorch.org/whl/cu124"
 torch = { index = "pytorch-cu124" }
 torchvision = { index = "pytorch-cu124" }
 torchaudio = { index = "pytorch-cu124" }
+python=3.12.3
