@@ -1,5 +1,5 @@
 """
-lstm_emg_classifier.py
+train_lstm.py
 ======================
 LSTM-based hand-gesture classifier for NinaPro DB1 EMG data.
 
@@ -13,7 +13,7 @@ Pipeline
 
 Usage (quick start — single subject, all exercises)
 -----------------------------------------------------
-    python lstm_emg_classifier.py \
+    /usr/local/python/3.12.1/bin/python /workspaces/EMG-Team205/Neural_Network/train_lstm.py \
         --csv S1_A1_E1_export.csv S1_A1_E2_export.csv S1_A1_E3_export.csv \
         --epochs 50
 
@@ -39,7 +39,9 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 # ── make sure signalprocessing.py is importable ──────────────────────────────
-sys.path.insert(0, str(Path(__file__).parent))
+base = Path(__file__).parent                    # …/Long_Short_Term_Memory
+sigproc = base.parent / "Signal Processing"     # …/Signal Processing
+sys.path.insert(0, str(sigproc))
 from signalprocessing import process_emg_continuous
 
 # ─────────────────────────────────────────────────────────────────────────────
