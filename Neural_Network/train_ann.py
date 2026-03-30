@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -55,19 +56,27 @@ class MLPWindowClassifier(nn.Module):
 # Training Function
 # =========================
 
-def train_model(model, train_loader, val_loader, epochs=25, lr=1e-3, device="cuda"):
+def train_model(model, train_loader, val_loader=None, epochs=25, lr=1e-3, device=None):
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    elif isinstance(device, str):
+        device = torch.device(device)
+
+    print(f"Using device: {device}")
+
     model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
 
     for epoch in range(epochs):
         model.train()
-        total_loss = 0
+        total_loss = 0.0
         correct = 0
         total = 0
 
         for Xb, yb in train_loader:
-            Xb, yb = Xb.to(device), yb.to(device)
+            Xb = Xb.to(device)
+            yb = yb.to(device)
 
             optimizer.zero_grad()
             logits = model(Xb)
@@ -76,12 +85,13 @@ def train_model(model, train_loader, val_loader, epochs=25, lr=1e-3, device="cud
             optimizer.step()
 
             total_loss += loss.item() * Xb.size(0)
-            correct += (logits.argmax(1) == yb).sum().item()
+            correct += (logits.argmax(dim=1) == yb).sum().item()
             total += Xb.size(0)
 
+        train_loss = total_loss / total
         train_acc = correct / total
 
-        print(f"Epoch {epoch+1:02d} | Loss: {total_loss/total:.4f} | Acc: {train_acc:.3f}")
+        print(f"Epoch {epoch + 1:02d} | Loss: {train_loss:.4f} | Acc: {train_acc:.3f}")
 
 
 # =========================
@@ -89,6 +99,8 @@ def train_model(model, train_loader, val_loader, epochs=25, lr=1e-3, device="cud
 # =========================
 
 if __name__ == "__main__":
+    print("Python executable:", sys.executable)
+    print("Torch version:", torch.__version__)
 
     # Example dummy data (REPLACE with your EMG windows)
     N = 1000
@@ -96,15 +108,16 @@ if __name__ == "__main__":
     C = 10       # EMG channels
     K = 8        # number of movement classes
 
-    X = np.random.randn(N, T, C)
+    X = np.random.randn(N, T, C).astype(np.float32)
     y = np.random.randint(0, K, size=N)
 
     dataset = WindowDataset(X, y)
-
     train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     model = MLPWindowClassifier(T=T, C=C, num_classes=K)
 
-    train_model(model, train_loader, val_loader=None, epochs=20)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    train_model(model, train_loader, val_loader=None, epochs=20, device=device)
 
     torch.save(model.state_dict(), "ann_model.pt")
+    print("Model saved to ann_model.pt")
